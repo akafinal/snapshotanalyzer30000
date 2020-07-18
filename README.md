@@ -5,7 +5,7 @@ A demo project that manages EC2 volume snaphshots
 A Project that uses Boto3 to manage EC2 instances snaphshots
 
 # Config
-Shotty uses Aws cli profile configuration, e.g.
+shotty uses the configuration file created by Aws cli e.g.
 `aws configure --profile shotty`
 
 # Run
