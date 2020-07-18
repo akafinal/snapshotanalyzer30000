@@ -9,4 +9,6 @@ shotty uses the configuration file created by Aws cli e.g.
 `aws configure --profile shotty`
 
 # Run
-`pipenv run python .\shotty\shotty.py `
+`pipenv run python .\shotty\shotty.py --<command> <project name> `
+*command is list, start, stop
+*'project name' is optional
