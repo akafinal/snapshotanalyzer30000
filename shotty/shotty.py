@@ -118,7 +118,7 @@ def snapshots():
 @snapshots.command('list')
 @click.option('--project', default = None,
 help='List snapshots by project tag, e.g. -project = <project name>')
-def list_snapshot(project):
+def list_snapshots(project):
     'List snapshots'
     instances = filter_instances(project)
     for i in instances:
@@ -131,8 +131,8 @@ def list_snapshot(project):
                     s.state,
                     s.progress,
                     s.start_time.strftime('%c')
-
                 )))
+                if s.state == 'completed': break
     return
 
 
