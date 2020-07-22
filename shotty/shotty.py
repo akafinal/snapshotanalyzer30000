@@ -116,11 +116,11 @@ def snapshots():
     """Commands for snapshots"""
 
 @snapshots.command('list')
-@click.option('--all','list_all', default = False, is_flag = True,
+@click.option('--all', default = False, is_flag = True,
 help = 'List all snapshots, not only the most recent one')
 @click.option('--project', default = None,
 help='List snapshots by project tag, e.g. -project = <project name>')
-def list_snapshots(project,list_all):
+def list_snapshots(project,all):
     'List snapshots'
     instances = filter_instances(project)
     for i in instances:
@@ -134,7 +134,7 @@ def list_snapshots(project,list_all):
                     s.progress,
                     s.start_time.strftime('%c')
                 )))
-                if s.state == 'completed' and not list_all: break
+                if s.state == 'completed' and not all: break
     return
 
 
