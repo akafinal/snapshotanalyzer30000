@@ -46,6 +46,7 @@ def list_volumes(project):
 def instances():
     'Commands for instances'
 
+
 @instances.command('start')
 @click.option('--project', default=None,
 help='Start instances by project tag, e.g. -project = <project name>')
@@ -62,7 +63,8 @@ def start_instances(project):
     return
 
 @instances.command('stop')
-@click.option('--project', default=None, help='Stop instances by project tag, e.g. -project = <project name>')
+@click.option('--project', default=None,
+help='Stop instances by project tag, e.g. -project = <project name>')
 def stop_instances(project):
     'Stop EC2 instances'
     instances = filter_instances(project)
@@ -117,6 +119,17 @@ def create_snapshots(project):
         i.start()
         i.wait_until_running()
     print("Job's done!")
+    return
+
+@instances.command('reboot', help = 'Reboot EC2 instances')
+@click.option('--project', default = False,
+help = 'Reboot instances by project tag')
+def reboot_instances(project):
+    instances = filter_instances(project)
+    for i in instances:
+        print('Rebooting {0}...'.format(i.id))
+        i.reboot()
+
     return
 
 @cli.group('snapshots')
