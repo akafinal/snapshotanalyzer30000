@@ -23,6 +23,7 @@ def has_pending_snapshots(volume):
 def cli():
     "Shotty manages snapshots"
 
+
 @cli.group('volumes')
 def volumes():
     'Commands for volumes'
@@ -55,14 +56,17 @@ help='Start instances by project tag, e.g. -project = <project name>')
 def start_instances(project,force):
     'Start EC2 instances'
     instances = filter_instances(project)
-    if force:
+    if not force and not project:
+        print('--force is needed when performing tasks on all instances')
+    else:
         for i in instances:
+
             print('Starting {0}...'.format(i.id) )
             try:
                 i.start()
             except botocore.exceptions.ClientError as e:
                 print('Unable to start {0}. '.format(i.id) + str(e))
-    else: print('Error starting all instances, needing --force')
+
     return
 
 @instances.command('stop')
@@ -74,8 +78,8 @@ help='Stop instances by project tag, e.g. -project = <project name>')
 def stop_instances(project,force):
     'Stop EC2 instances'
     instances = filter_instances(project)
-    if not force:
-        print ('Error stopping all instances, needing --force')
+    if not force and not project:
+        print('--force is needed when performing tasks on all instances')
     else:
         for i in instances:
             print('Stopping {0}...'.format(i.id) )
@@ -111,26 +115,29 @@ help='create snapshots by project tag, e.g. -project = <project name>')
 def create_snapshots(project, force):
     'Create snapshots for EC2 instances'
     instances = filter_instances(project)
-    if force:
+    if not force and not project:
+        print('--force is needed when performing tasks on all instances')
+    else:
         for i in instances:
-            print('Stopping {0}'.format(i.id))
+            #print('Stopping {0}'.format(i.id))
 
-            i.stop()
-            i.wait_until_stopped()
+            #i.stop()
+            #i.wait_until_stopped()
 
             for v in i.volumes.all():
                 if has_pending_snapshots(v):
                         print('Skipping {0}, another snapshot is in progress'.format(v.id))
                 else:
+                    try:
                         print('Creating a snapshot of {0}...'.format(v.id))
                         v.create_snapshot(Description = 'Created by SnapshotAlyzer30000')
+                    except botocore.exceptions.ClientError as e:
+                        print('Unable to snapshot {0}. '.format(v.id) + str(e))
+            #print('Starting {0}'.format(i.id))
 
-            print('Starting {0}'.format(i.id))
-
-            i.start()
-            i.wait_until_running()
-    else: print('Error snapshotting all volumes, needing --force')
-    print("Job's done!")
+            #i.start()
+            #i.wait_until_running()
+    #print("Job's done!")
     return
 
 @instances.command('reboot', help = 'Reboot EC2 instances')
@@ -140,15 +147,15 @@ help = 'Reboot instances by project tag')
 help = 'Force rebooting all instances')
 def reboot_instances(project,force):
     instances = filter_instances(project)
-    if force:
+    if not force and not project:
+        print('--force is needed when performing tasks on all instances')
+    else:
         for i in instances:
             print('Rebooting {0}...'.format(i.id))
         try:
             i.reboot()
         except botocore.exceptions.ClientError as e:
             print('Unable to reboot {0}. '.format(i.id) + str(e))
-    else:
-        print('Error rebooting all instances, needing --force')
     return
 
 @cli.group('snapshots')
@@ -163,6 +170,7 @@ help='List snapshots by project tag, e.g. -project = <project name>')
 def list_snapshots(project,list_all):
     'List snapshots'
     instances = filter_instances(project)
+
     for i in instances:
         for v in i.volumes.all():
             for s in v.snapshots.all():
