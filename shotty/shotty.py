@@ -1,9 +1,13 @@
 import boto3
 import botocore
 import click
+import datetime
+from datetime import datetime, timezone
 
 session = boto3.Session(profile_name='shotty')
 ec2 = session.resource('ec2')
+
+
 def filter_project_instances(project):
     'Filter EC2 instances'
     instances = []
@@ -22,7 +26,6 @@ def filter_instanceId_instances(instance_id):
         instances = ec2.instances.filter(Filters=filters)
     else:
         instances = ec2.instances.all()
-
     return instances
 
 
@@ -30,10 +33,21 @@ def has_pending_snapshots(volume):
     snapshots = list(volume.snapshots.all())
     return snapshots and snapshots[0].state == 'pending'
 
+def calculate_snapshots_age(volume,age):
+    snapshots = list(volume.snapshots.all())
+    now = datetime.now(timezone.utc)
+    diff = now - snapshots[0].start_time
+    mins = diff.seconds/60
+    return mins >= float(age)
 
 @click.group()
+# @click.option('--profile', default = None,
+# help='Select the AWS profile')
 def cli():
     "Shotty manages snapshots"
+
+    # session = boto3.Session(profile_name=profile)
+    # ec2 = session.resource('ec2')
 
 @cli.group('volumes')
 def volumes():
@@ -146,7 +160,10 @@ help = 'Create snapshots for one instance')
 help = 'Force snapshotting all existing volumes')
 @click.option('--project', default = None,
 help='create snapshots by project tag, e.g. -project = <project name>')
-def create_snapshots(project, force, instance):
+@click.option('--age', default=None,
+help='Only take a new snapshot based on the age of the most recent snapshot')
+
+def create_snapshots(project, force, instance, age):
     'Create snapshots for EC2 instances'
     if not force and not project and not instance:
         print('--force is needed when performing tasks on all instances')
@@ -159,7 +176,6 @@ def create_snapshots(project, force, instance):
     inst = []
     for i in instances:
         print('Stopping {0}'.format(i.id))
-
         if i.state['Name'] == 'running': inst.append(i)
 
         i.stop()
@@ -167,18 +183,21 @@ def create_snapshots(project, force, instance):
 
         for v in i.volumes.all():
             if has_pending_snapshots(v):
-                    print('Skipping {0}, another snapshot is in progress'.format(v.id))
-            else:
+                print('Skipping {0}, another snapshot is in progress'.format(v.id))
+            elif calculate_snapshots_age(v,age):
                 try:
                     print('Creating a snapshot of {0}...'.format(v.id))
                     v.create_snapshot(Description = 'Created by SnapshotAlyzer30000')
                 except botocore.exceptions.ClientError as e:
                     print('Unable to snapshot {0}. '.format(v.id) + str(e))
+            else:
+                print('The most recent snapshot is not {0} mins old'.format(age))
+
     for i in inst:
          print('Starting instances that were running before {0}'.format(i.id))
          i.start()
         #i.wait_until_running()
-    #print("Job's done!")
+    print("Job's done!")
     return
 
 @instances.command('reboot', help = 'Reboot EC2 instances')
