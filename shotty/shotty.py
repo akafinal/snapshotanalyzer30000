@@ -4,10 +4,6 @@ import click
 import datetime
 from datetime import datetime, timezone
 
-session = boto3.Session(profile_name='shotty')
-ec2 = session.resource('ec2')
-
-
 def filter_project_instances(project):
     'Filter EC2 instances'
     instances = []
@@ -28,10 +24,13 @@ def filter_instanceId_instances(instance_id):
         instances = ec2.instances.all()
     return instances
 
+def has_no_snapshots(volume):
+    snapshots = volume.snapshots.all()
+    return snapshots
 
 def has_pending_snapshots(volume):
     snapshots = list(volume.snapshots.all())
-    return snapshots and snapshots[0].state == 'pending'
+    return snapshots[0].state == 'pending'
 
 def calculate_snapshots_age(volume,age):
     snapshots = list(volume.snapshots.all())
@@ -41,13 +40,13 @@ def calculate_snapshots_age(volume,age):
     return mins >= float(age)
 
 @click.group()
-# @click.option('--profile', default = None,
-# help='Select the AWS profile')
-def cli():
+@click.option('--profile', default = None, help='Select the AWS profile')
+def cli(profile):
     "Shotty manages snapshots"
-
-    # session = boto3.Session(profile_name=profile)
-    # ec2 = session.resource('ec2')
+    session = boto3.Session(profile_name=profile)
+    ec2_cli = session.resource('ec2')
+    global ec2
+    ec2 = ec2_cli
 
 @cli.group('volumes')
 def volumes():
@@ -175,16 +174,21 @@ def create_snapshots(project, force, instance, age):
 
     inst = []
     for i in instances:
-        print('Stopping {0}'.format(i.id))
         if i.state['Name'] == 'running': inst.append(i)
 
-        i.stop()
-        i.wait_until_stopped()
-
         for v in i.volumes.all():
-            if has_pending_snapshots(v):
+            if has_no_snapshots(v):
+                print('Stopping {0}'.format(i.id))
+                i.stop()
+                i.wait_until_stopped()
+                print('Creating a snapshot of {0}...'.format(v.id))
+                v.create_snapshot(Description = 'Created by SnapshotAlyzer30000')
+            elif has_pending_snapshots(v):
                 print('Skipping {0}, another snapshot is in progress'.format(v.id))
             elif calculate_snapshots_age(v,age):
+                print('Stopping {0}'.format(i.id))
+                i.stop()
+                i.wait_until_stopped()
                 try:
                     print('Creating a snapshot of {0}...'.format(v.id))
                     v.create_snapshot(Description = 'Created by SnapshotAlyzer30000')
