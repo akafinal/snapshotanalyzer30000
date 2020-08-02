@@ -2,7 +2,8 @@
 A demo project that manages EC2 volume snaphshots
 
 # About
-A Project that uses Boto3 to manage EC2 instances snaphshots
+A Project that uses Boto3 to manage EC2 instances snaphshots. This is part of the course 'Python for Beginners' on ACloud Guru by Robin Norwood. 
+I've integrated some extra functions to his code.
 
 # Config
 shotty uses the configuration file created by Aws cli e.g.
