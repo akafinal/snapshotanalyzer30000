@@ -1,5 +1,5 @@
 # snapshotanalyzer30000
-A demo project that manages EC2 volume snaphshots
+A demo project that manages EC2 volume snapshots
 
 # About
 A Project that uses Boto3 to manage EC2 instances snaphshots. This is part of the course 'Python for Beginners' on ACloud Guru by Robin Norwood(https://www.linkedin.com/in/robin-norwood/). 
