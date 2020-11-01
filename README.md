@@ -2,7 +2,7 @@
 A demo project that manages EC2 volume snapshots
 
 # About
-A Project that uses Boto3 to manage EC2 instances snaphshots. This is part of the course 'Python for Beginners' on ACloud Guru by Robin Norwood(https://www.linkedin.com/in/robin-norwood/). 
+A Project that uses Boto3 to manage EC2 instances snaphshots. This is part of the course 'Python for Beginners' on ACloud Guru (https://acloud.guru/learn/python-for-beginners) by Robin Norwood(https://www.linkedin.com/in/robin-norwood/). 
 I've integrated some extra functions to his code:
 
 1. Add 'age' parameter to the 'snapshot' command that takes an age in days and only snapshots volumes whose last successful snapshot is older than that many days, e.g. “shotty instances snapshot —age 7 —project Valkyrie” 
